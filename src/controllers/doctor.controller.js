@@ -450,6 +450,39 @@ const cancelPremium = asyncHandler(async (req, res) => {
   }
 });
 
+// In the controller function
+const saveTimeSlots = async (req, res) => {
+  const { _id, time_slot } = req.body;
+
+  try {
+      const doctor = await Doctor.findById(_id);
+      if (!doctor) {
+          return res.status(404).json({ message: "Doctor not found" });
+      }
+
+
+      const t_s = [0, 0, 0, 0, 0, 0, 0, 0];
+      const available = [0, 0, 0, 0, 0, 0, 0, 0];
+      for (let index = 0; index < time_slot.length; index++) {
+        if (time_slot[index] === 1) {
+          t_s[index] = 1;
+          available[index] = 6;
+        } else {
+          t_s[index] = 0;
+          available[index] = 0;
+        }
+      }
+
+      doctor.time_slot = t_s;
+      doctor.available = available;
+      await doctor.save();
+      return res.status(200).json({ message: "Time slots updated successfully", doctor });
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Error saving time slots" });
+  }
+};
+
 
 export {
   registerDoctor,
@@ -465,7 +498,8 @@ export {
   editDoctor,
   updateSchedule,
   goPremium,
-  cancelPremium
+  cancelPremium,
+  saveTimeSlots
 };
 
 

@@ -13,7 +13,8 @@ import {
   editDoctor,
   updateSchedule,
   goPremium,
-  cancelPremium
+  cancelPremium,
+  saveTimeSlots
 } from "../controllers/doctor.controller.js"; // Import controller functions
 import { upload } from "../middlewares/multer.middleware.js";
 import {verifyJWT} from "../middlewares/auth.middleware.js";
@@ -74,5 +75,7 @@ router.post("/cancelPremium", cancelPremium);
 router.put("/edit", editDoctor);
 
 router.put("/updateSchedule", updateSchedule);
+
+router.patch("/saveTimeSlots", saveTimeSlots);
 
 export default router;
