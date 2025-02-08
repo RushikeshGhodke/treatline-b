@@ -6,7 +6,7 @@ const app = express();
 app.use(
   cors({
     // origin: `http://${ip}:5173`, // Your frontend URL (adjust port if necessary)
-    origin: ['http://localhost:5173',],
+    origin: ['http://localhost:5173','https://treatline.vercel.app'],
     credentials: true, // Allow credentials like cookies to be sent
   })
 )
