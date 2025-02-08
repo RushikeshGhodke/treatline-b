@@ -37,6 +37,10 @@ router.route("/register").post(
 // Doctor Login
 router.post("/login", loginDoctor);
 
+router.get("/hi", (req, res) => {
+  res.send("Hi")
+})
+
 // Doctor Logout
 router.post("/logout", verifyJWT, logoutDoctor);
 
