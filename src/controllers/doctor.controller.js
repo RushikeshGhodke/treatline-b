@@ -6,6 +6,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
+import mongoose from "mongoose";
 
 // Set up a nodemailer transporter for email sending (e.g., OTPs)
 const transporter = nodemailer.createTransport({
@@ -368,6 +369,87 @@ const updateSchedule = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Doctor schedule updated successfully" });
 });
 
+const goPremium = asyncHandler(async (req, res) => {
+  const { _id } = req.body;
+
+  // Validate that _id is provided and is a valid ObjectId
+  if (!_id) {
+    return res.status(400).json(new ApiResponse(400, {}, "Doctor ID is required"));
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(_id)) {
+    return res.status(400).json(new ApiResponse(400, {}, "Invalid Doctor ID"));
+  }
+
+  console.log(_id);
+
+  try {
+    // Find and update the doctor's information
+    const doctor = await Doctor.findByIdAndUpdate(
+      _id,
+      {
+        $set: {
+          is_sponsored: true, // Mark the doctor as sponsored
+        },
+      },
+      { new: true }
+    ).select("-password"); // Exclude the password from the response
+
+    // If no doctor is found, return 404
+    if (!doctor) {
+      return res.status(404).json(new ApiResponse(404, {}, "Doctor not found"));
+    }
+
+    // Return a success response
+    return res.status(200).json(new ApiResponse(200, {}, "Doctor updated to premium"));
+  } catch (error) {
+    // Handle other errors
+    console.error(error);
+    return res.status(500).json(new ApiResponse(500, {}, "Internal server error"));
+  }
+});
+
+
+const cancelPremium = asyncHandler(async (req, res) => {
+  const { _id } = req.body;
+
+  // Validate that _id is provided and is a valid ObjectId
+  if (!_id) {
+    return res.status(400).json(new ApiResponse(400, {}, "Doctor ID is required"));
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(_id)) {
+    return res.status(400).json(new ApiResponse(400, {}, "Invalid Doctor ID"));
+  }
+
+  console.log(_id);
+
+  try {
+    // Find and update the doctor's is_sponsored field to false
+    const doctor = await Doctor.findByIdAndUpdate(
+      _id,
+      {
+        $set: {
+          is_sponsored: false, // Mark the doctor as not sponsored
+        },
+      },
+      { new: true }
+    ).select("-password"); // Exclude the password from the response
+
+    // If no doctor is found, return 404
+    if (!doctor) {
+      return res.status(404).json(new ApiResponse(404, {}, "Doctor not found"));
+    }
+
+    // Return a success response
+    return res.status(200).json(new ApiResponse(200, {}, "Doctor premium status cancelled"));
+  } catch (error) {
+    // Handle unexpected errors
+    console.error(error);
+    return res.status(500).json(new ApiResponse(500, {}, "Internal server error"));
+  }
+});
+
 
 export {
   registerDoctor,
@@ -381,7 +463,9 @@ export {
   verifyOTP,
   resetPassword,
   editDoctor,
-  updateSchedule
+  updateSchedule,
+  goPremium,
+  cancelPremium
 };
 
 

@@ -11,7 +11,9 @@ import {
   verifyOTP,
   resetPassword,
   editDoctor,
-  updateSchedule
+  updateSchedule,
+  goPremium,
+  cancelPremium
 } from "../controllers/doctor.controller.js"; // Import controller functions
 import { upload } from "../middlewares/multer.middleware.js";
 import {verifyJWT} from "../middlewares/auth.middleware.js";
@@ -64,6 +66,9 @@ router.post("/verify-otp", verifyOTP);
 
 // Reset Password
 router.post("/reset-password", resetPassword);
+
+router.post("/goPremium", goPremium);
+router.post("/cancelPremium", cancelPremium);
 
 // Edit Doctor Profile
 router.put("/edit", editDoctor);
