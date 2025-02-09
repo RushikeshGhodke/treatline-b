@@ -37,19 +37,96 @@ const generateAccessAndRefreshToken = async (doctorId) => {
 };
 
 // Doctor registration
-const registerDoctor = asyncHandler(async (req, res) => {
-  const { name, specialist, email, password, phone, years_of_experience, medical_license, degree, institute, year_of_completion, medical_registration_id } = req.body;
+// const registerDoctor = asyncHandler(async (req, res) => {
+//   const { name, specialist, email, password, phone, years_of_experience, medical_license, degree, institute, year_of_completion, medical_registration_id } = req.body;
 
+//   if ([name, specialist, email, password, phone].some((field) => field?.trim() === "")) {
+//     throw new ApiError(400, "All fields are required");
+//   }
+
+//   const existingDoctor = await Doctor.findOne({ $or: [{ email }, { phone }] });
+
+//   if (existingDoctor) {
+//     throw new ApiError(409, "Doctor already exists");
+//   }
+
+//   const profileImageLocalPath = req.files?.profile_image[0]?.path;
+//   if (!profileImageLocalPath) {
+//     throw new ApiError(400, "Profile Image is required.");
+//   }
+
+//   const profileImage = await uploadOnCloudinary(profileImageLocalPath);
+//   if (!profileImage) {
+//     throw new ApiError(400, "Error while uploading profile image");
+//   }
+
+//   const degree_certificateLocalPath = req.files?.degree_certificate[0]?.path;
+//   if (!degree_certificateLocalPath) {
+//     throw new ApiError(400, "degree certificate Image is required.");
+//   }
+
+//   // const degree_certificate = await uploadOnCloudinary(degree_certificateLocalPath);
+//   // console.log(degree_certificate)
+//   // if (!degree_certificate) {
+//   //   throw new ApiError(400, "Error while uploading degree_certificate image");
+//   // }
+
+//   const doctor = await Doctor.create({
+//     name,
+//     specialist,
+//     email,
+//     password,
+//     phone,
+//     years_of_experience,
+//     medical_license,
+//     degree, institute, year_of_completion,
+//     profile_image: profileImage.url,
+//     medical_registration_id
+//   });
+
+//   const createdDoctor = await Doctor.findById(doctor._id).select("-password -refreshToken");
+
+//   if (!createdDoctor) {
+//     throw new ApiError(500, "Something went wrong on Server");
+//   }
+
+//   return res.status(201).json(new ApiResponse(200, createdDoctor, "Doctor registered successfully"));
+// });
+
+
+const registerDoctor = asyncHandler(async (req, res) => {
+  const {
+    name,
+    specialist,
+    email,
+    password,
+    phone,
+    years_of_experience,
+    medical_license,
+    degree,
+    institute,
+    year_of_completion,
+    medical_registration_id,
+    languages, // Added languages field
+  } = req.body;
+
+  // Validation for required fields
   if ([name, specialist, email, password, phone].some((field) => field?.trim() === "")) {
     throw new ApiError(400, "All fields are required");
   }
 
-  const existingDoctor = await Doctor.findOne({ $or: [{ email }, { phone }] });
+  // Validate languages (must select at least one)
+  if (!languages || languages.length === 0) {
+    throw new ApiError(400, "At least one language must be selected");
+  }
 
+  // Check if doctor already exists by email or phone
+  const existingDoctor = await Doctor.findOne({ $or: [{ email }, { phone }] });
   if (existingDoctor) {
     throw new ApiError(409, "Doctor already exists");
   }
 
+  // Handle Profile Image
   const profileImageLocalPath = req.files?.profile_image[0]?.path;
   if (!profileImageLocalPath) {
     throw new ApiError(400, "Profile Image is required.");
@@ -60,17 +137,19 @@ const registerDoctor = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Error while uploading profile image");
   }
 
+  // Handle Degree Certificate Image
   const degree_certificateLocalPath = req.files?.degree_certificate[0]?.path;
   if (!degree_certificateLocalPath) {
-    throw new ApiError(400, "degree certificate Image is required.");
+    throw new ApiError(400, "Degree certificate Image is required.");
   }
 
-  // const degree_certificate = await uploadOnCloudinary(degree_certificateLocalPath);
-  // console.log(degree_certificate)
-  // if (!degree_certificate) {
-  //   throw new ApiError(400, "Error while uploading degree_certificate image");
-  // }
+  // Uncomment this if you plan to upload the degree certificate to Cloudinary
+  const degree_certificate = await uploadOnCloudinary(degree_certificateLocalPath);
+  if (!degree_certificate) {
+    throw new ApiError(400, "Error while uploading degree certificate image");
+  }
 
+  // Create the doctor document in the database
   const doctor = await Doctor.create({
     name,
     specialist,
@@ -79,11 +158,16 @@ const registerDoctor = asyncHandler(async (req, res) => {
     phone,
     years_of_experience,
     medical_license,
-    degree, institute, year_of_completion,
+    degree,
+    institute,
+    year_of_completion,
+    degree_certificate: degree_certificate.url,
     profile_image: profileImage.url,
-    medical_registration_id
+    medical_registration_id,
+    languages, // Save the languages in the database
   });
 
+  // Retrieve the created doctor without sensitive fields (password, refreshToken)
   const createdDoctor = await Doctor.findById(doctor._id).select("-password -refreshToken");
 
   if (!createdDoctor) {
@@ -92,6 +176,7 @@ const registerDoctor = asyncHandler(async (req, res) => {
 
   return res.status(201).json(new ApiResponse(200, createdDoctor, "Doctor registered successfully"));
 });
+
 
 // Doctor login
 const loginDoctor = asyncHandler(async (req, res) => {
