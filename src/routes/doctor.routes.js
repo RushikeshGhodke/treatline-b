@@ -14,7 +14,10 @@ import {
   updateSchedule,
   goPremium,
   cancelPremium,
-  saveTimeSlots
+  saveTimeSlots,
+  getUnverifiedDoctors,
+  approveDoctor,
+  rejectDoctor
 } from "../controllers/doctor.controller.js"; // Import controller functions
 import { upload } from "../middlewares/multer.middleware.js";
 import {verifyJWT} from "../middlewares/auth.middleware.js";
@@ -77,5 +80,11 @@ router.put("/edit", editDoctor);
 router.put("/updateSchedule", updateSchedule);
 
 router.patch("/saveTimeSlots", saveTimeSlots);
+
+router.get("/getUnverifiedDoctors", getUnverifiedDoctors);
+
+router.put("/approveDoctor/:doctorId", approveDoctor)
+
+router.put("/rejectDoctor/:doctorId", rejectDoctor)
 
 export default router;

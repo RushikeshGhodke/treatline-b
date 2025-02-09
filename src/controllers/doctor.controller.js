@@ -342,7 +342,7 @@ const editDoctor = asyncHandler(async (req, res) => {
 
 // Update Doctor schedule
 const updateSchedule = asyncHandler(async (req, res) => {
-  const { timeIndexes } = req?.body; 
+  const { timeIndexes } = req?.body;
 
   console.log(timeIndexes);
 
@@ -455,34 +455,75 @@ const saveTimeSlots = async (req, res) => {
   const { _id, time_slot } = req.body;
 
   try {
-      const doctor = await Doctor.findById(_id);
-      if (!doctor) {
-          return res.status(404).json({ message: "Doctor not found" });
+    const doctor = await Doctor.findById(_id);
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+
+    const t_s = [0, 0, 0, 0, 0, 0, 0, 0];
+    const available = [0, 0, 0, 0, 0, 0, 0, 0];
+    for (let index = 0; index < time_slot.length; index++) {
+      if (time_slot[index] === 1) {
+        t_s[index] = 1;
+        available[index] = 6;
+      } else {
+        t_s[index] = 0;
+        available[index] = 0;
       }
+    }
 
-
-      const t_s = [0, 0, 0, 0, 0, 0, 0, 0];
-      const available = [0, 0, 0, 0, 0, 0, 0, 0];
-      for (let index = 0; index < time_slot.length; index++) {
-        if (time_slot[index] === 1) {
-          t_s[index] = 1;
-          available[index] = 6;
-        } else {
-          t_s[index] = 0;
-          available[index] = 0;
-        }
-      }
-
-      doctor.time_slot = t_s;
-      doctor.available = available;
-      await doctor.save();
-      return res.status(200).json({ message: "Time slots updated successfully", doctor });
+    doctor.time_slot = t_s;
+    doctor.available = available;
+    await doctor.save();
+    return res.status(200).json({ message: "Time slots updated successfully", doctor });
   } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Error saving time slots" });
+    console.error(error);
+    return res.status(500).json({ message: "Error saving time slots" });
   }
 };
 
+const getUnverifiedDoctors = asyncHandler(async (req, res) => {
+  try {
+    const doctors = await Doctor.find({ "is_active": false });
+    // console.log(doctors)
+    res.status(200).json(new ApiResponse(200, doctors, "All unverified doctors fetched successfully."));
+  } catch (error) {
+    return res.status(500).json({ message: "Error fetching unverified doctors." });
+  }
+})
+
+const approveDoctor = asyncHandler(async (req, res) => {
+  const { doctorId } = req.params;
+  try {
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      return res.status(404).json({ success: false, message: 'Doctor not found' });
+    }
+    doctor.is_active = true;
+    await doctor.save();
+    return res.status(200).json({ success: true, message: 'Doctor approved successfully' });
+  } catch (error) {
+    console.error('Error approving doctor:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+})
+
+const rejectDoctor = asyncHandler(async (req, res) => {
+  const { doctorId } = req.params;
+    try {
+        const doctor = await Doctor.findById(doctorId);
+        if (!doctor) {
+            return res.status(404).json({ success: false, message: 'Doctor not found' });
+        }
+        // Using deleteOne instead of remove
+        await Doctor.deleteOne({ _id: doctorId });
+        return res.status(200).json({ success: true, message: 'Doctor rejected successfully' });
+    } catch (error) {
+        console.error('Error rejecting doctor:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+})
 
 export {
   registerDoctor,
@@ -499,7 +540,10 @@ export {
   updateSchedule,
   goPremium,
   cancelPremium,
-  saveTimeSlots
+  saveTimeSlots,
+  getUnverifiedDoctors,
+  rejectDoctor,
+  approveDoctor
 };
 
 
